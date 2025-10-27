@@ -70,7 +70,7 @@ Follow these instructions to set up and run the project locally.
 -   Solana CLI: [Installation Guide](https://docs.solana.com/cli/install-solana-cli-tools)
 -   Anchor CLI: [Installation Guide](https://www.anchor-lang.com/docs/installation)
 
-### Installation & Setup
+### Installation
 
 1.  **Clone the repository:**
     ```bash
@@ -82,51 +82,71 @@ Follow these instructions to set up and run the project locally.
     ```bash
     cd web
     npm install
-    cd ..
     ```
 
-3.  **Configure Solana and Anchor:**
-    -   Set Solana to use the local validator:
-        ```bash
-        solana config set --url localhost
-        ```
-    -   Start the local validator in a separate terminal:
-        ```bash
-        solana-test-validator
-        ```
-    -   Build the Anchor program:
-        ```bash
-        cd anchor
-        anchor build
-        ```
-    -   Deploy the program. This will output a program ID.
-        ```bash
-        anchor deploy
-        ```
+3.  **Build the Anchor program:**
+    ```bash
+    cd ../anchor
+    anchor build
+    ```
 
-4.  **Update Program ID:**
-    -   Copy the new program ID from the `anchor deploy` command.
-    -   Open `anchor/src/lib.rs` and paste the ID into the `declare_id!` macro.
-    -   Open `web/idl/anchor.json` and update the `address` field.
-    -   Re-build the program: `anchor build`.
+---
 
-### Running the Application
+## Testing the Program
 
-1.  **Start the Frontend:**
-    -   Navigate to the web directory and start the development server.
+To run the test suite on the Anchor program:
+
+1.  Navigate to the `anchor` directory.
+2.  Run the `anchor test` command. This will build the program, deploy it to a local test validator, and run the tests defined in `tests/hotel-loyalty.ts`.
+
+```bash
+cd anchor
+anchor test
+```
+
+---
+
+## Deployment
+
+A helper script is provided to streamline deployment to Solana's devnet.
+
+### Airdrop SOL
+
+Before deploying or testing on devnet, you'll need devnet SOL. Use the `airdrop-sol.sh` script:
+
+```bash
+./scripts/airdrop-sol.sh <YOUR_WALLET_ADDRESS>
+```
+
+### Deploy to Devnet
+
+The `deploy-devnet.sh` script will build the program, deploy it, and copy the resulting IDL to the frontend for you.
+
+```bash
+./scripts/deploy-devnet.sh
+```
+
+The script will output the new Program ID. Make sure to update this ID in `anchor/src/lib.rs` and `web/idl/anchor.json` if it has changed.
+
+---
+
+## Running the Application
+
+1.  **Start the Local Validator:**
+    -   For local development and testing, run a local validator.
+    ```bash
+    solana-test-validator
+    ```
+
+2.  **Start the Frontend:**
+    -   In a new terminal, navigate to the `web` directory and start the development server.
     ```bash
     cd web
     npm run dev
     ```
 
-2.  **Open the Application:**
+3.  **Open the Application:**
     -   Open your browser and go to `http://localhost:3000`.
-
-3.  **Fund Your Wallet:**
-    -   You will need some local SOL to pay for transactions. Use the Solana CLI to airdrop funds to your wallet's public key:
-    ```bash
-    solana airdrop 2 <YOUR_WALLET_ADDRESS>
-    ```
 
 ---
 
