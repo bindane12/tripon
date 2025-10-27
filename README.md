@@ -12,6 +12,16 @@ Users can mint a "membership" token for a hotel, which then accumulates loyalty 
 -   **Points Redemption**: Users can redeem their accumulated points.
 -   **User Dashboard**: A comprehensive dashboard to view available hotels, manage memberships, and interact with the points system.
 
+## Listing Your Property on TripOn
+
+If you are a hotel or property owner, you can apply to have your property listed on TripOn. The process is as follows:
+
+1.  **Submit an Application:** Reach out to the TripOn team to start the application process. You will need to provide details about your property.
+2.  **Verification:** The TripOn team will review your application and verify your property.
+3.  **Onboarding:** Once verified, you will be onboarded onto the platform, and your property will be listed.
+
+Please contact us at apply@tripon.example.com to start the process.
+
 ## Tech Stack
 
 -   **Blockchain**: Solana
@@ -32,15 +42,28 @@ The Anchor program, located in the `anchor/` directory, defines the core busines
 
 #### Accounts
 
+-   **`Config`**: A singleton account that stores the public key of the program admin.
 -   **`Hotel`**: A Program Derived Address (PDA) account that stores information about a single hotel, including its name, owner, verification status, and the total supply of membership tokens.
 -   **`Membership`**: A PDA account unique to a user and a hotel. It stores the user's points balance, when they joined, and other relevant data for calculating points.
 
 #### Instructions
 
--   `initialize_hotel(name, verified)`: Creates a new `Hotel` account. Can only be called by the hotel owner.
+-   `initialize_config()`: Initializes the program's configuration, setting the caller as the admin. This should only be called once.
+-   `initialize_hotel(name)`: Creates a new `Hotel` account with the `verified` status set to `false`. Can only be called by a hotel owner.
+-   `verify_hotel()`: Sets a hotel's `verified` status to `true`. Can only be called by the program admin.
 -   `mint_membership_token()`: Creates a new `Membership` account for the calling user, linking them to a specific hotel. This costs 0.01 SOL, which is transferred to the hotel owner.
 -   `calculate_and_update_points()`: Calculates points earned based on the time elapsed since the last update and adds them to the user's `Membership` account.
 -   `redeem_points(amount)`: Subtracts a specified number of points from a user's `Membership` account.
+
+#### Admin Role and Hotel Verification
+
+The contract now includes a simple admin role. The admin is responsible for verifying hotels before they can be used by users.
+
+The workflow is as follows:
+1.  The program authority calls `initialize_config()` once to become the admin.
+2.  A hotel owner calls `initialize_hotel()` to register their hotel. The hotel is created in an unverified state.
+3.  The admin calls `verify_hotel()` to approve the hotel, setting its `verified` flag to `true`.
+4.  Once a hotel is verified, users can mint membership tokens for it.
 
 ### Frontend (Next.js)
 

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -7,7 +6,6 @@ import { Program, AnchorProvider } from '@coral-xyz/anchor';
 import { PublicKey, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import idl from '../../idl/anchor.json';
 import { Anchor } from '../../../anchor/target/types/anchor';
-
 
 // Hardcoded program ID for the prototype
 const programID = new PublicKey(idl.address);
@@ -18,7 +16,6 @@ export default function RegisterHotelPage() {
     const { publicKey, sendTransaction } = wallet;
 
     const [hotelName, setHotelName] = useState('');
-    const [isVerified, setIsVerified] = useState(false);
     const [balance, setBalance] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -75,7 +72,7 @@ export default function RegisterHotelPage() {
 
             // Build the transaction
             const tx = await program.methods
-                .initializeHotel(hotelName, isVerified)
+                .initializeHotel(hotelName) // `isVerified` removed
                 .accounts({
                     hotel: hotelPda,
                     authority: publicKey,
@@ -90,7 +87,6 @@ export default function RegisterHotelPage() {
             setTxSig(signature);
             // Clear form on success
             setHotelName('');
-            setIsVerified(false);
 
         } catch (err: any) {
             console.error("Transaction error:", err);
@@ -100,68 +96,70 @@ export default function RegisterHotelPage() {
         }
     };
 
+    if (!isClient) {
+        return null; // Or a loading spinner
+    }
+
     if (!publicKey) {
         return (
-            <div className="container mx-auto p-4 text-center">
-                <p className="text-lg font-semibold">Please connect your wallet to register a hotel.</p>
+            <div className="container mx-auto p-4 text-center py-20">
+                <p className="text-lg font-semibold text-gray-700">Please connect your wallet to register a hotel.</p>
             </div>
         );
     }
 
     return (
-        <div className="container mx-auto p-4 max-w-2xl">
-            <h1 className="text-3xl font-bold mb-2">Register Your Hotel</h1>
-            <p className="mb-4 text-gray-600">Your Balance: {isClient && balance !== null ? `${balance.toFixed(4)} SOL` : 'Loading...'}</p>
+        <div className="min-h-screen bg-muted">
+            <div className="container mx-auto p-4 max-w-2xl py-12">
+                <header className="text-center mb-8">
+                    <h1 className="text-4xl font-extrabold text-foreground">List Your Property</h1>
+                    <p className="text-muted-foreground mt-2">Join the decentralized travel revolution by listing your hotel on TripOn.</p>
+                </header>
 
-            <div className="bg-white shadow-md rounded-lg p-6 space-y-6">
-                <div className="space-y-2">
-                    <label htmlFor="hotelName" className="block text-sm font-medium text-gray-800">Hotel Name</label>
-                    <input
-                        type="text"
-                        id="hotelName"
-                        value={hotelName}
-                        onChange={(e) => setHotelName(e.target.value)}
-                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-black"
-                        placeholder='e.g., "Solana Grand Hotel"'
-                        disabled={loading}
-                    />
+                <div className="bg-card shadow-lg rounded-2xl p-8 border border-border">
+                    <div className="mb-6">
+                        <p className="text-sm text-muted-foreground">Your Balance: {balance !== null ? `${balance.toFixed(4)} SOL` : 'Loading...'}</p>
+                    </div>
+
+                    <div className="space-y-6">
+                        <div className="space-y-2">
+                            <label htmlFor="hotelName" className="block text-sm font-medium text-foreground">Hotel Name</label>
+                            <input
+                                type="text"
+                                id="hotelName"
+                                value={hotelName}
+                                onChange={(e) => setHotelName(e.target.value)}
+                                className="w-full px-4 py-3 bg-background border border-border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/50 sm:text-sm text-foreground"
+                                placeholder='e.g., "The Solana Sands Resort"'
+                                disabled={loading}
+                            />
+                        </div>
+
+                        <button
+                            onClick={handleRegisterHotel}
+                            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:bg-gray-400"
+                            disabled={loading || !hotelName}
+                        >
+                            {loading ? 'Registering...' : 'Register Hotel'}
+                        </button>
+                    </div>
                 </div>
 
-                <div className="flex items-center">
-                    <input
-                        id="isVerified"
-                        type="checkbox"
-                        checked={isVerified}
-                        onChange={(e) => setIsVerified(e.target.checked)}
-                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                        disabled={loading}
-                    />
-                    <label htmlFor="isVerified" className="ml-2 block text-sm text-gray-900">Verified Hotel</label>
-                </div>
-
-                <button
-                    onClick={handleRegisterHotel}
-                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400"
-                    disabled={loading || !hotelName}
-                >
-                    {loading ? 'Registering...' : 'Register Hotel'}
-                </button>
+                {error && <div className="mt-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg"><strong>Error:</strong> {error}</div>}
+                {txSig && (
+                    <div className="mt-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+                        <strong>Success!</strong> Transaction confirmed. 
+                        <a 
+                            href={`https://explorer.solana.com/tx/${txSig}?cluster=devnet`}
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className='font-medium underline hover:text-green-800 ml-2'
+                        >
+                            View on Solana Explorer
+                        </a>
+                    </div>
+                )}
             </div>
-
-            {error && <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md"><strong>Error:</strong> {error}</div>}
-            {txSig && (
-                <div className="mt-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-md">
-                    <strong>Success!</strong> Transaction confirmed. 
-                    <a 
-                        href={`https://explorer.solana.com/tx/${txSig}?cluster=devnet`}
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className='font-medium underline hover:text-green-800'
-                    >
-                         View on Solana Explorer
-                    </a>
-                </div>
-            )}
         </div>
     );
 }

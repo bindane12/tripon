@@ -11,11 +11,17 @@ pub mod anchor {
         Ok(())
     }
 
-    pub fn initialize_hotel(ctx: Context<InitializeHotel>, name: String, verified: bool) -> Result<()> {
+    pub fn initialize_config(ctx: Context<InitializeConfig>) -> Result<()> {
+        let config = &mut ctx.accounts.config;
+        config.admin = *ctx.accounts.admin.key;
+        Ok(())
+    }
+
+    pub fn initialize_hotel(ctx: Context<InitializeHotel>, name: String) -> Result<()> {
         let hotel = &mut ctx.accounts.hotel;
         hotel.hotel_id = *hotel.to_account_info().key;
         hotel.name = name;
-        hotel.verified = verified;
+        hotel.verified = false;
         hotel.owner = *ctx.accounts.authority.key;
         hotel.token_supply = 0;
         hotel.timestamp = Clock::get()?.unix_timestamp;
@@ -89,6 +95,12 @@ pub mod anchor {
         msg!("Added {} points. New balance: {}", points, membership_token.points_balance);
         Ok(())
     }
+
+    pub fn verify_hotel(ctx: Context<VerifyHotel>) -> Result<()> {
+        let hotel = &mut ctx.accounts.hotel;
+        hotel.verified = true;
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
@@ -151,6 +163,19 @@ pub struct AddPoints<'info> {
     pub user: Signer<'info>,
 }
 
+#[derive(Accounts)]
+pub struct VerifyHotel<'info> {
+    #[account(mut)]
+    pub hotel: Account<'info, Hotel>,
+    #[account(
+        seeds = [b"config"],
+        bump,
+        constraint = config.admin == admin.key() @ ErrorCode::InvalidAdmin
+    )]
+    pub config: Account<'info, Config>,
+    pub admin: Signer<'info>,
+}
+
 
 #[account]
 pub struct Hotel {
@@ -193,6 +218,26 @@ impl PointsLedger {
     pub const LEN: usize = 8 + 32 + 32 + 8 + 8;
 }
 
+#[account]
+pub struct Config {
+    pub admin: Pubkey,
+}
+
+#[derive(Accounts)]
+pub struct InitializeConfig<'info> {
+    #[account(
+        init,
+        payer = admin,
+        space = 8 + 32,
+        seeds = [b"config"],
+        bump
+    )]
+    pub config: Account<'info, Config>,
+    #[account(mut)]
+    pub admin: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
 #[error_code]
 pub enum ErrorCode {
     #[msg("Hotel is not verified.")]
@@ -201,4 +246,6 @@ pub enum ErrorCode {
     InvalidHotelOwner,
     #[msg("Insufficient points to redeem.")]
     InsufficientPoints,
+    #[msg("Invalid admin.")]
+    InvalidAdmin,
 }
