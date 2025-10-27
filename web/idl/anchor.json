@@ -1,0 +1,352 @@
+{
+  "address": "DSsad7SycJg39A2PUgGpLgyrvPytkvCiKhvAhS4j7ANz",
+  "metadata": {
+    "name": "anchor",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "add_points",
+      "discriminator": [
+        59,
+        82,
+        226,
+        114,
+        188,
+        88,
+        181,
+        51
+      ],
+      "accounts": [
+        {
+          "name": "membership_token",
+          "writable": true
+        },
+        {
+          "name": "user",
+          "signer": true,
+          "relations": [
+            "membership_token"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "points",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "calculate_and_update_points",
+      "discriminator": [
+        126,
+        251,
+        134,
+        130,
+        164,
+        34,
+        5,
+        192
+      ],
+      "accounts": [
+        {
+          "name": "membership_token",
+          "writable": true
+        },
+        {
+          "name": "user",
+          "signer": true,
+          "relations": [
+            "membership_token"
+          ]
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize",
+      "discriminator": [
+        175,
+        175,
+        109,
+        31,
+        13,
+        152,
+        155,
+        237
+      ],
+      "accounts": [],
+      "args": []
+    },
+    {
+      "name": "initialize_hotel",
+      "discriminator": [
+        208,
+        74,
+        162,
+        238,
+        154,
+        60,
+        77,
+        172
+      ],
+      "accounts": [
+        {
+          "name": "hotel",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  104,
+                  111,
+                  116,
+                  101,
+                  108
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "name"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "verified",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "mint_membership_token",
+      "discriminator": [
+        28,
+        55,
+        110,
+        237,
+        220,
+        154,
+        64,
+        30
+      ],
+      "accounts": [
+        {
+          "name": "hotel",
+          "writable": true
+        },
+        {
+          "name": "membership_token",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  101,
+                  109,
+                  98,
+                  101,
+                  114,
+                  115,
+                  104,
+                  105,
+                  112
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "hotel"
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "hotel_authority",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "redeem_points",
+      "discriminator": [
+        178,
+        79,
+        85,
+        218,
+        121,
+        101,
+        34,
+        12
+      ],
+      "accounts": [
+        {
+          "name": "membership_token",
+          "writable": true
+        },
+        {
+          "name": "user",
+          "signer": true,
+          "relations": [
+            "membership_token"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "points_to_redeem",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Hotel",
+      "discriminator": [
+        106,
+        159,
+        170,
+        202,
+        103,
+        172,
+        199,
+        81
+      ]
+    },
+    {
+      "name": "Membership",
+      "discriminator": [
+        231,
+        141,
+        180,
+        98,
+        109,
+        168,
+        175,
+        166
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "HotelNotVerified",
+      "msg": "Hotel is not verified."
+    },
+    {
+      "code": 6001,
+      "name": "InvalidHotelOwner",
+      "msg": "Invalid hotel owner."
+    },
+    {
+      "code": 6002,
+      "name": "InsufficientPoints",
+      "msg": "Insufficient points to redeem."
+    }
+  ],
+  "types": [
+    {
+      "name": "Hotel",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "hotel_id",
+            "type": "pubkey"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "verified",
+            "type": "bool"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "token_supply",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Membership",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "hotel",
+            "type": "pubkey"
+          },
+          {
+            "name": "token_count",
+            "type": "u64"
+          },
+          {
+            "name": "points_balance",
+            "type": "u64"
+          },
+          {
+            "name": "last_points_update",
+            "type": "i64"
+          },
+          {
+            "name": "multiplier",
+            "type": "u8"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    }
+  ]
+}
