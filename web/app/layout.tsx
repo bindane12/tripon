@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Poppins } from "next/font/google";
 import "./globals.css";
-import Navbar from "../components/Navbar";
+import Navigation from "../components/Navigation";
 import dynamic from "next/dynamic";
 import { ReactNode } from "react";
 
@@ -10,7 +10,10 @@ const WalletProvider = dynamic(
   { ssr: false }
 );
 
-const inter = Inter({ subsets: ["latin"] });
+const poppins = Poppins({ 
+  subsets: ["latin"],
+  weight: ['300', '400', '500', '600', '700'] 
+});
 
 export const metadata: Metadata = {
   title: "Hotel Loyalty Platform",
@@ -24,10 +27,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-gray-900 text-white`}>
+      <body className={`${poppins.className} bg-gray-900`}>
         <WalletProvider>
-          <Navbar />
-          <main className="container mx-auto p-4">{children}</main>
+          <Navigation />
+          <main>{children}</main>
         </WalletProvider>
       </body>
     </html>
