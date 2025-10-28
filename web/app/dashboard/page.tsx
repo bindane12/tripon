@@ -1,10 +1,17 @@
 'use client';
 
-import { mockHotels, Hotel } from '../../lib/mockHotels';
+import { mockHotels } from '../../lib/mockHotels';
 import Image from 'next/image';
-import { FC, ReactNode } from 'react';
+import { FC, ReactNode, useState, useMemo, useEffect } from 'react';
 import { BarChart2, ChevronRight, DollarSign, Star, Wallet } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { Program, AnchorProvider } from '@coral-xyz/anchor';
+import { PublicKey, SystemProgram } from '@solana/web3.js';
+import idl from '../../idl/anchor.json';
+import { Anchor } from '../../../anchor/target/types/anchor';
+
+const programID = new PublicKey(idl.address);
 
 // --- Reusable Components ---
 
@@ -29,7 +36,7 @@ const StatCard: FC<{ title: string; value: string; icon: ReactNode }> = ({ title
   </div>
 );
 
-const HotelRow: FC<{ hotel: Hotel }> = ({ hotel }) => (
+const HotelRow: FC<{ hotel: any }> = ({ hotel }) => (
   <div className="flex items-center justify-between p-4 border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors">
     <div className="flex items-center gap-4">
       <Image src={hotel.image} alt={hotel.name} width={40} height={40} className="rounded-full object-cover" />
@@ -66,6 +73,76 @@ const RewardsChartPlaceholder: FC = () => (
 // --- Dashboard Page ---
 
 export default function DashboardPage() {
+  const { connection } = useConnection();
+  const wallet = useWallet();
+  const { publicKey, sendTransaction } = wallet;
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [txSig, setTxSig] = useState('');
+
+  const provider = useMemo(() => {
+      if (!wallet.publicKey || !connection) return null;
+      return new AnchorProvider(connection, wallet as any, { preflightCommitment: 'processed' });
+  }, [connection, wallet]);
+
+  const program = useMemo(() => {
+      if (!provider) return null;
+      return new Program<Anchor>(idl as any, provider);
+  }, [provider]);
+
+  const handleMint = async (hotel: any) => {
+    if (!program || !publicKey || !provider) {
+        setError('Wallet not connected or program not loaded. Please connect your wallet.');
+        return;
+    }
+
+    setLoading(true);
+    setError('');
+    setTxSig('');
+
+    try {
+        const [hotelPda] = await PublicKey.findProgramAddress(
+            [
+                Buffer.from("hotel"),
+                Buffer.from(hotel.name)
+            ],
+            program.programId
+        );
+
+        const [membershipPda] = await PublicKey.findProgramAddress(
+            [
+                Buffer.from("membership"),
+                hotelPda.toBuffer(),
+                publicKey.toBuffer()
+            ],
+            program.programId
+        );
+
+        const tx = await program.methods
+            .mintMembershipToken()
+            .accounts({
+                hotel: hotelPda,
+                membershipToken: membershipPda,
+                user: publicKey,
+                hotelAuthority: new PublicKey(hotel.owner), // Assuming hotel owner is the authority
+                systemProgram: SystemProgram.programId,
+            })
+            .transaction();
+
+        const signature = await sendTransaction(tx, connection);
+        await connection.confirmTransaction(signature, 'confirmed');
+
+        setTxSig(signature);
+
+    } catch (err: any) {
+        console.error("Transaction error:", err);
+        setError(err.message || 'An unknown error occurred during the transaction.');
+    } finally {
+        setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-muted text-foreground">
       <div className="container mx-auto p-4 sm:p-6 lg:p-8">
@@ -113,10 +190,28 @@ export default function DashboardPage() {
                 <Image src={mockHotels[4].image} alt={mockHotels[4].name} width={400} height={250} className="w-full h-32 object-cover rounded-lg mb-3" />
                 <h3 className="font-bold text-md text-foreground">{mockHotels[4].name}</h3>
                 <p className="text-xs text-muted-foreground mb-3">{mockHotels[4].location}</p>
-                <button className="w-full bg-primary text-primary-foreground font-semibold py-2 px-4 rounded-lg shadow-md transition-colors hover:bg-primary/90 text-sm">
-                    Mint Now
+                <button 
+                    onClick={() => handleMint(mockHotels[4])}
+                    disabled={loading}
+                    className="w-full bg-primary text-primary-foreground font-semibold py-2 px-4 rounded-lg shadow-md transition-colors hover:bg-primary/90 text-sm disabled:bg-gray-400"
+                >
+                    {loading ? 'Minting...' : 'Mint Now'}
                 </button>
                 </div>
+                {error && <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm"><strong>Error:</strong> {error}</div>}
+                {txSig && (
+                    <div className="mt-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg text-sm">
+                        <strong>Success!</strong> 
+                        <a 
+                            href={`https://explorer.solana.com/tx/${txSig}?cluster=devnet`}
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className='font-medium underline hover:text-green-800 ml-1'
+                        >
+                            View on Explorer
+                        </a>
+                    </div>
+                )}
             </DashboardSection>
           </div>
 

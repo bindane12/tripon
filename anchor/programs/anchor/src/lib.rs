@@ -6,11 +6,6 @@ declare_id!("DSsad7SycJg39A2PUgGpLgyrvPytkvCiKhvAhS4j7ANz");
 pub mod anchor {
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        msg!("Greetings from: {:?}", ctx.program_id);
-        Ok(())
-    }
-
     pub fn initialize_config(ctx: Context<InitializeConfig>) -> Result<()> {
         let config = &mut ctx.accounts.config;
         config.admin = *ctx.accounts.admin.key;
@@ -43,15 +38,15 @@ pub mod anchor {
         membership_token.timestamp = Clock::get()?.unix_timestamp;
 
         let hotel = &mut ctx.accounts.hotel;
-        hotel.token_supply = hotel.token_supply.checked_add(1).unwrap();
+        hotel.token_supply = hotel.token_supply.checked_add(1).ok_or(ErrorCode::ArithmeticError)?;
 
         let fee = 10_000_000; // 0.01 SOL in lamports
-        let from_account = &ctx.accounts.user.to_account_info();
+        let from_account = &ctx.accounts.user;
         let to_account = &ctx.accounts.hotel_authority;
 
         let transfer_instruction = anchor_lang::system_program::Transfer {
-            from: from_account.clone(),
-            to: to_account.clone(),
+            from: from_account.to_account_info(),
+            to: to_account.to_account_info(),
         };
         let cpi_context = CpiContext::new(
             ctx.accounts.system_program.to_account_info(),
@@ -65,33 +60,43 @@ pub mod anchor {
     pub fn calculate_and_update_points(ctx: Context<CalculateAndUpdatePoints>) -> Result<()> {
         let membership_token = &mut ctx.accounts.membership_token;
         let current_timestamp = Clock::get()?.unix_timestamp;
-
+    
+        // Ensure current_timestamp is greater than the last update to prevent negative values
+        if current_timestamp <= membership_token.last_points_update {
+            return err!(ErrorCode::InvalidTimestamp);
+        }
+    
         let days_elapsed = (current_timestamp - membership_token.last_points_update) / (24 * 60 * 60);
         let points_earned = days_elapsed as u64 * membership_token.multiplier as u64;
-
-        membership_token.points_balance = membership_token.points_balance.checked_add(points_earned).unwrap();
+    
+        membership_token.points_balance = membership_token.points_balance.checked_add(points_earned).ok_or(ErrorCode::ArithmeticError)?;
         membership_token.last_points_update = current_timestamp;
-
+    
         Ok(())
     }
 
     pub fn redeem_points(ctx: Context<RedeemPoints>, points_to_redeem: u64) -> Result<()> {
         let membership_token = &mut ctx.accounts.membership_token;
-
+    
+        // Ensure the redemption amount is positive
+        if points_to_redeem == 0 {
+            return err!(ErrorCode::InvalidRedemptionAmount);
+        }
+    
         if membership_token.points_balance < points_to_redeem {
             return err!(ErrorCode::InsufficientPoints);
         }
-
-        membership_token.points_balance = membership_token.points_balance.checked_sub(points_to_redeem).unwrap();
-
+    
+        membership_token.points_balance = membership_token.points_balance.checked_sub(points_to_redeem).ok_or(ErrorCode::ArithmeticError)?;
+    
         msg!("Redeemed {} points. New balance: {}", points_to_redeem, membership_token.points_balance);
-
+    
         Ok(())
     }
 
     pub fn add_points(ctx: Context<AddPoints>, points: u64) -> Result<()> {
         let membership_token = &mut ctx.accounts.membership_token;
-        membership_token.points_balance = membership_token.points_balance.checked_add(points).unwrap();
+        membership_token.points_balance = membership_token.points_balance.checked_add(points).ok_or(ErrorCode::ArithmeticError)?;
         msg!("Added {} points. New balance: {}", points, membership_token.points_balance);
         Ok(())
     }
@@ -102,9 +107,6 @@ pub mod anchor {
         Ok(())
     }
 }
-
-#[derive(Accounts)]
-pub struct Initialize {}
 
 #[derive(Accounts)]
 #[instruction(name: String)]
@@ -138,7 +140,7 @@ pub struct MintMembershipToken<'info> {
     pub user: Signer<'info>,
     /// CHECK: This is not dangerous because we check it against the hotel owner
     #[account(mut, constraint = hotel.owner == hotel_authority.key() @ ErrorCode::InvalidHotelOwner)]
-    pub hotel_authority: AccountInfo<'info>,
+    pub hotel_authority: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
 }
 
@@ -158,9 +160,12 @@ pub struct RedeemPoints<'info> {
 
 #[derive(Accounts)]
 pub struct AddPoints<'info> {
-    #[account(mut, has_one = user)]
+    #[account(mut, has_one = hotel)]
     pub membership_token: Account<'info, Membership>,
-    pub user: Signer<'info>,
+    #[account(mut)]
+    pub hotel: Account<'info, Hotel>,
+    #[account(mut, constraint = hotel.owner == authority.key() @ ErrorCode::InvalidHotelOwner)]
+    pub authority: Signer<'info>,
 }
 
 #[derive(Accounts)]
@@ -248,4 +253,11 @@ pub enum ErrorCode {
     InsufficientPoints,
     #[msg("Invalid admin.")]
     InvalidAdmin,
+    #[msg("Arithmetic error.")]
+    ArithmeticError,
+    #[msg("Invalid timestamp.")]
+    InvalidTimestamp,
+    #[msg("Invalid redemption amount.")]
+    InvalidRedemptionAmount,
 }
+

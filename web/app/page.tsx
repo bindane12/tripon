@@ -1,10 +1,17 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { FC, ReactNode } from 'react';
+import { FC, ReactNode, useState, useMemo } from 'react';
 import Image from 'next/image';
 import { mockHotels, Hotel } from '../lib/mockHotels';
 import { ArrowRight, CheckCircle, Star, TrendingUp, Zap, ShieldCheck, Globe } from 'lucide-react';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { Program, AnchorProvider } from '@coral-xyz/anchor';
+import { PublicKey, SystemProgram } from '@solana/web3.js';
+import idl from '../idl/anchor.json';
+import { Anchor } from '../../anchor/target/types/anchor';
+
+const programID = new PublicKey(idl.address);
 
 // --- Reusable Components ---
 
@@ -115,34 +122,124 @@ const FeaturedStaysSection: FC = () => (
   </Section>
 );
 
-const HotelCard: FC<{ hotel: Hotel, index: number }> = ({ hotel, index }) => (
-  <motion.div 
-    className="bg-background rounded-2xl shadow-lg overflow-hidden border border-border group transition-all duration-300 hover:shadow-xl hover:border-primary/50"
-    initial={{ opacity: 0, y: 50 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, amount: 0.3 }}
-    transition={{ duration: 0.6, delay: index * 0.1 }}
-    whileHover={{ y: -8 }}
-  >
-    <div className="relative h-56 overflow-hidden">
-      <Image src={hotel.image} alt={hotel.name} fill style={{objectFit:"cover"}} className="group-hover:scale-110 transition-transform duration-500" />
-      <div className="absolute top-4 right-4 bg-background/60 backdrop-blur-sm text-foreground text-sm px-3 py-1 rounded-full flex items-center gap-2 border border-border">
-        <Star size={16} className="text-amber-400" /> {hotel.rating}
+const HotelCard: FC<{ hotel: Hotel, index: number }> = ({ hotel, index }) => {
+  const { connection } = useConnection();
+  const wallet = useWallet();
+  const { publicKey, sendTransaction } = wallet;
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [txSig, setTxSig] = useState('');
+
+  const provider = useMemo(() => {
+      if (!wallet.publicKey || !connection) return null;
+      return new AnchorProvider(connection, wallet as any, { preflightCommitment: 'processed' });
+  }, [connection, wallet]);
+
+  const program = useMemo(() => {
+      if (!provider) return null;
+      return new Program<Anchor>(idl as any, provider);
+  }, [provider]);
+
+  const handleMint = async () => {
+    if (!program || !publicKey || !provider) {
+        setError('Wallet not connected or program not loaded. Please connect your wallet.');
+        return;
+    }
+
+    setLoading(true);
+    setError('');
+    setTxSig('');
+
+    try {
+        const [hotelPda] = await PublicKey.findProgramAddress(
+            [
+                Buffer.from("hotel"),
+                Buffer.from(hotel.name)
+            ],
+            program.programId
+        );
+
+        const [membershipPda] = await PublicKey.findProgramAddress(
+            [
+                Buffer.from("membership"),
+                hotelPda.toBuffer(),
+                publicKey.toBuffer()
+            ],
+            program.programId
+        );
+
+        const tx = await program.methods
+            .mintMembershipToken()
+            .accounts({
+                hotel: hotelPda,
+                membershipToken: membershipPda,
+                user: publicKey,
+                hotelAuthority: new PublicKey(hotel.owner),
+                systemProgram: SystemProgram.programId,
+            })
+            .transaction();
+
+        const signature = await sendTransaction(tx, connection);
+        await connection.confirmTransaction(signature, 'confirmed');
+
+        setTxSig(signature);
+
+    } catch (err: any) {
+        console.error("Transaction error:", err);
+        setError(err.message || 'An unknown error occurred during the transaction.');
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  return (
+    <motion.div 
+      className="bg-background rounded-2xl shadow-lg overflow-hidden border border-border group transition-all duration-300 hover:shadow-xl hover:border-primary/50"
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.6, delay: index * 0.1 }}
+      whileHover={{ y: -8 }}
+    >
+      <div className="relative h-56 overflow-hidden">
+        <Image src={hotel.image} alt={hotel.name} fill style={{objectFit:"cover"}} className="group-hover:scale-110 transition-transform duration-500" />
+        <div className="absolute top-4 right-4 bg-background/60 backdrop-blur-sm text-foreground text-sm px-3 py-1 rounded-full flex items-center gap-2 border border-border">
+          <Star size={16} className="text-amber-400" /> {hotel.rating}
+        </div>
       </div>
-    </div>
-    <div className="p-6">
-      <h3 className="font-display text-2xl font-bold tracking-wide mb-2">{hotel.name}</h3>
-      <p className="text-muted-foreground text-sm mb-5">{hotel.location}</p>
-      <div className="flex justify-between items-center text-sm mb-6">
-        <span className="text-muted-foreground">Minting Price</span>
-        <span className="font-bold text-lg text-foreground">{hotel.mintingPrice} SOL</span>
+      <div className="p-6">
+        <h3 className="font-display text-2xl font-bold tracking-wide mb-2">{hotel.name}</h3>
+        <p className="text-muted-foreground text-sm mb-5">{hotel.location}</p>
+        <div className="flex justify-between items-center text-sm mb-6">
+          <span className="text-muted-foreground">Minting Price</span>
+          <span className="font-bold text-lg text-foreground">{hotel.mintingPrice} SOL</span>
+        </div>
+        <button 
+          onClick={handleMint}
+          disabled={loading || !publicKey}
+          className="w-full bg-primary text-primary-foreground font-bold py-3 px-4 rounded-lg shadow-md shadow-primary/20 transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/40 transform hover:-translate-y-1 disabled:bg-gray-400"
+        >
+          {loading ? 'Minting...' : 'Mint Loyalty Token'}
+        </button>
+        {error && <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm"><strong>Error:</strong> {error}</div>}
+        {txSig && (
+            <div className="mt-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg text-sm">
+                <strong>Success!</strong> 
+                <a 
+                    href={`https://explorer.solana.com/tx/${txSig}?cluster=devnet`}
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className='font-medium underline hover:text-green-800 ml-1'
+                >
+                    View on Explorer
+                </a>
+            </div>
+        )}
       </div>
-      <button className="w-full bg-primary text-primary-foreground font-bold py-3 px-4 rounded-lg shadow-md shadow-primary/20 transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/40 transform hover:-translate-y-1">
-        Mint Loyalty Token
-      </button>
-    </div>
-  </motion.div>
-);
+    </motion.div>
+  );
+};
 
 const HowItWorksSection: FC = () => {
   const steps = [
