@@ -29,7 +29,7 @@ The platform now includes a tiered membership system to reward loyal users with 
 -   **Basic**: 0-999 points (1x points multiplier)
 -   **Silver**: 1,000-4,999 points (1.2x points multiplier)
 -   **Gold**: 5,000-9,999 points (1.5x points multiplier)
--   **Platinum**: 10,000+ points (2x points multiplier)
+-   **Platinum**: 15,000+ points (2x points multiplier)
 
 Users are automatically upgraded to the next tier as they accumulate points.
 

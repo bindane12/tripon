@@ -21,7 +21,7 @@ const TIER_CONFIG = {
   3: { name: 'Platinum', color: '#6366f1', benefits: '2x points multiplier' },
 };
 
-const TIER_THRESHOLDS = [0, 1000, 5000, 10000];
+const TIER_THRESHOLDS = [0, 1000, 5000, 15000];
 
 const TierBadge: FC<{ tier: number }> = ({ tier }) => {
   const { name, color, benefits } = TIER_CONFIG[tier as keyof typeof TIER_CONFIG] || TIER_CONFIG[0];

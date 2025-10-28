@@ -73,7 +73,7 @@ pub mod anchor {
         membership_token.last_points_update = current_timestamp;
 
         // Update tier based on points balance
-        if membership_token.points_balance >= 10000 {
+        if membership_token.points_balance >= 15000 {
             membership_token.tier = 3; // Platinum
         } else if membership_token.points_balance >= 5000 {
             membership_token.tier = 2; // Gold
