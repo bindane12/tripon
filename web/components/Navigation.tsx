@@ -11,7 +11,7 @@ const Navigation = () => {
             <nav className="container mx-auto flex items-center justify-between p-4 text-white">
                 <div className="flex items-center space-x-4">
                     <Link href="/" className="flex items-center space-x-2">
-                        <Image src="/logo.png" alt="Trip.on Logo" width={32} height={32} />
+                        <Image src="Assets/logo.png" alt="Trip.on Logo" width={32} height={32} />
                         <span className="text-xl font-bold">TRIP.on</span>
                     </Link>
                 </div>

@@ -1,37 +1,76 @@
-@import '@solana/wallet-adapter-react-ui/styles.css';
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
- 
+
+@import '@solana/wallet-adapter-react-ui/styles.css';
+
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 160 100% 32%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --color-background: hsl(0 0% 100%); /* #FFFFFF */
+    --color-foreground: hsl(222 22% 11%); /* #111827 */
+    --color-card: hsl(0 0% 100%);
+    --color-card-foreground: hsl(222 22% 11%);
+    --color-popover: hsl(0 0% 100%);
+    --color-popover-foreground: hsl(222 22% 11%);
+    --color-primary: hsl(145 63% 49%); /* #22C55E */
+    --color-primary-foreground: hsl(0 0% 100%);
+    --color-secondary: hsl(145 50% 65%);
+    --color-secondary-foreground: hsl(222 22% 11%);
+    --color-muted: hsl(210 40% 98%); /* #F7FAFC */
+    --color-muted-foreground: hsl(215 14% 47%); /* #6B7280 */
+    --color-accent: hsl(210 40% 96%);
+    --color-accent-foreground: hsl(222 22% 11%);
+    --color-destructive: hsl(0 84% 60%);
+    --color-destructive-foreground: hsl(0 0% 98%);
+    --color-border: hsl(210 20% 94%);
+    --color-input: hsl(210 20% 94%);
+    --color-ring: hsl(145 63% 49%);
     --radius: 0.5rem;
   }
-}
- 
-@layer base {
+
+  .dark {
+    --color-background: hsl(222 22% 11%);
+    --color-foreground: hsl(210 40% 98%);
+    --color-card: hsl(222 22% 11%);
+    --color-card-foreground: hsl(210 40% 98%);
+    --color-popover: hsl(222 22% 11%);
+    --color-popover-foreground: hsl(210 40% 98%);
+    --color-primary: hsl(145 63% 49%);
+    --color-primary-foreground: hsl(0 0% 100%);
+    --color-secondary: hsl(145 50% 65%);
+    --color-secondary-foreground: hsl(222 22% 11%);
+    --color-muted: hsl(222 22% 15%);
+    --color-muted-foreground: hsl(215 14% 47%);
+    --color-accent: hsl(222 22% 15%);
+    --color-accent-foreground: hsl(210 40% 98%);
+    --color-destructive: hsl(0 63% 31%);
+    --color-destructive-foreground: hsl(0 0% 98%);
+    --color-border: hsl(222 22% 20%);
+    --color-input: hsl(222 22% 20%);
+    --color-ring: hsl(145 63% 49%);
+  }
+
   body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  .wallet-adapter-button {
+    background-color: var(--color-primary);
+    color: var(--color-primary-foreground);
+    height: 3rem; /* h-12 */
+    padding-left: 1.5rem; /* px-6 */
+    padding-right: 1.5rem; /* px-6 */
+    border-radius: 9999px; /* rounded-full */
+    font-weight: 700; /* font-bold */
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
+  }
+  .wallet-adapter-button:hover {
+    background-color: var(--color-primary-hover);
   }
 }
