@@ -9,8 +9,29 @@ Users can mint a "membership" token for a hotel, which then accumulates loyalty 
 -   **Hotel Registration**: Hotel owners can register their hotel on the platform.
 -   **Membership Minting**: Users can connect their Solana wallet and mint a membership token for a registered hotel for a small fee (0.01 SOL).
 -   **Points Accumulation**: Loyalty points are automatically calculated and can be updated based on the duration the membership is held.
+-   **Tiered Membership**: A tiered membership system (Basic, Silver, Gold, Platinum) that offers different benefits based on accumulated points.
 -   **Points Redemption**: Users can redeem their accumulated points.
 -   **User Dashboard**: A comprehensive dashboard to view available hotels, manage memberships, and interact with the points system.
+
+## Security and Logic Improvements
+
+The smart contract has been updated with several security and logic improvements to ensure its robustness and reliability:
+
+-   **Signer Authorization**: All privileged instructions now include proper signer authorization checks to ensure that only authorized accounts can perform sensitive actions.
+-   **PDA Validation**: Program Derived Address (PDA) accounts are now correctly derived and validated to prevent account substitution attacks.
+-   **Arithmetic Overflow/Underflow Protection**: All arithmetic operations now use checked arithmetic to prevent overflow and underflow errors.
+-   **Timestamp and Redemption Validation**: The points calculation and redemption logic now includes validation checks to prevent logical flaws, such as negative timestamps or zero-value redemptions.
+
+## Tiered Membership System
+
+The platform now includes a tiered membership system to reward loyal users with additional benefits. The tiers are as follows:
+
+-   **Basic**: 0-999 points (1x points multiplier)
+-   **Silver**: 1,000-4,999 points (1.2x points multiplier)
+-   **Gold**: 5,000-9,999 points (1.5x points multiplier)
+-   **Platinum**: 10,000+ points (2x points multiplier)
+
+Users are automatically upgraded to the next tier as they accumulate points.
 
 ## Listing Your Property on TripOn
 
@@ -44,7 +65,7 @@ The Anchor program, located in the `anchor/` directory, defines the core busines
 
 -   **`Config`**: A singleton account that stores the public key of the program admin.
 -   **`Hotel`**: A Program Derived Address (PDA) account that stores information about a single hotel, including its name, owner, verification status, and the total supply of membership tokens.
--   **`Membership`**: A PDA account unique to a user and a hotel. It stores the user's points balance, when they joined, and other relevant data for calculating points.
+-   **`Membership`**: A PDA account unique to a user and a hotel. It stores the user's points balance, when they joined, their current tier, and other relevant data for calculating points.
 
 #### Instructions
 
@@ -52,12 +73,13 @@ The Anchor program, located in the `anchor/` directory, defines the core busines
 -   `initialize_hotel(name)`: Creates a new `Hotel` account with the `verified` status set to `false`. Can only be called by a hotel owner.
 -   `verify_hotel()`: Sets a hotel's `verified` status to `true`. Can only be called by the program admin.
 -   `mint_membership_token()`: Creates a new `Membership` account for the calling user, linking them to a specific hotel. This costs 0.01 SOL, which is transferred to the hotel owner.
--   `calculate_and_update_points()`: Calculates points earned based on the time elapsed since the last update and adds them to the user's `Membership` account.
+-   `calculate_and_update_points()`: Calculates points earned based on the time elapsed since the last update and adds them to the user's `Membership` account. It also updates the user's tier based on their new points balance.
 -   `redeem_points(amount)`: Subtracts a specified number of points from a user's `Membership` account.
 
 #### Admin Role and Hotel Verification
 
 The contract now includes a simple admin role. The admin is responsible for verifying hotels before they can be used by users.
+
 
 The workflow is as follows:
 1.  The program authority calls `initialize_config()` once to become the admin.
@@ -75,7 +97,7 @@ The frontend, located in the `web/` directory, provides a user interface to inte
 -   **`/register-hotel`**: A form for hotel owners to register their hotel by calling the `initialize_hotel` instruction.
 -   **`/dashboard`**: The main user dashboard.
     -   **Available Hotels**: Fetches and displays all `Hotel` accounts from the blockchain. Users can click a button here to mint a membership token.
-    -   **My Memberships**: Fetches and displays all `Membership` accounts owned by the connected user. It shows their points balance and provides buttons to refresh or redeem points.
+    -   **My Memberships**: Fetches and displays all `Membership` accounts owned by the connected user. It shows their points balance, tier, and progress toward the next tier, and provides buttons to refresh or redeem points.
 -   **`components/WalletContextProvider.tsx`**: Wraps the application to provide wallet connection logic from `@solana/wallet-adapter`.
 -   **`components/Navbar.tsx`**: The main navigation bar with links to all pages and the wallet connection button.
 

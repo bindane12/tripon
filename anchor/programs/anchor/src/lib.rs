@@ -36,6 +36,7 @@ pub mod anchor {
         membership_token.last_points_update = Clock::get()?.unix_timestamp;
         membership_token.multiplier = 1;
         membership_token.timestamp = Clock::get()?.unix_timestamp;
+        membership_token.tier = 0; // Default to Basic tier
 
         let hotel = &mut ctx.accounts.hotel;
         hotel.token_supply = hotel.token_supply.checked_add(1).ok_or(ErrorCode::ArithmeticError)?;
@@ -60,37 +61,46 @@ pub mod anchor {
     pub fn calculate_and_update_points(ctx: Context<CalculateAndUpdatePoints>) -> Result<()> {
         let membership_token = &mut ctx.accounts.membership_token;
         let current_timestamp = Clock::get()?.unix_timestamp;
-    
-        // Ensure current_timestamp is greater than the last update to prevent negative values
+
         if current_timestamp <= membership_token.last_points_update {
             return err!(ErrorCode::InvalidTimestamp);
         }
-    
+
         let days_elapsed = (current_timestamp - membership_token.last_points_update) / (24 * 60 * 60);
         let points_earned = days_elapsed as u64 * membership_token.multiplier as u64;
-    
+
         membership_token.points_balance = membership_token.points_balance.checked_add(points_earned).ok_or(ErrorCode::ArithmeticError)?;
         membership_token.last_points_update = current_timestamp;
-    
+
+        // Update tier based on points balance
+        if membership_token.points_balance >= 10000 {
+            membership_token.tier = 3; // Platinum
+        } else if membership_token.points_balance >= 5000 {
+            membership_token.tier = 2; // Gold
+        } else if membership_token.points_balance >= 1000 {
+            membership_token.tier = 1; // Silver
+        } else {
+            membership_token.tier = 0; // Basic
+        }
+
         Ok(())
     }
 
     pub fn redeem_points(ctx: Context<RedeemPoints>, points_to_redeem: u64) -> Result<()> {
         let membership_token = &mut ctx.accounts.membership_token;
-    
-        // Ensure the redemption amount is positive
+
         if points_to_redeem == 0 {
             return err!(ErrorCode::InvalidRedemptionAmount);
         }
-    
+
         if membership_token.points_balance < points_to_redeem {
             return err!(ErrorCode::InsufficientPoints);
         }
-    
+
         membership_token.points_balance = membership_token.points_balance.checked_sub(points_to_redeem).ok_or(ErrorCode::ArithmeticError)?;
-    
+
         msg!("Redeemed {} points. New balance: {}", points_to_redeem, membership_token.points_balance);
-    
+
         Ok(())
     }
 
@@ -205,10 +215,11 @@ pub struct Membership {
     pub last_points_update: i64,
     pub multiplier: u8,
     pub timestamp: i64,
+    pub tier: u8,
 }
 
 impl Membership {
-    pub const LEN: usize = 8 + 32 + 32 + 8 + 8 + 8 + 1 + 8;
+    pub const LEN: usize = 8 + 32 + 32 + 8 + 8 + 8 + 1 + 8 + 1;
 }
 
 #[account]
