@@ -2,7 +2,7 @@
 
 This project is a decentralized application (dApp) that implements a hotel loyalty points system on the Solana blockchain. It consists of an Anchor-based on-chain program and a Next.js web frontend.
 
-Users can mint a "membership" token for a hotel, which then accumulates loyalty points over time. These points can then be redeemed.
+Users can mint a "membership" token for a hotel, which then accumulates loyalty points over time for a real world asset value. These points can then be redeemed.
 
 ## Features
 
