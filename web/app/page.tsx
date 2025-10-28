@@ -97,7 +97,7 @@ const HotelCard: FC<{ hotel: Hotel }> = ({ hotel }) => (
 
 const HowItWorksSection: FC = () => {
   const steps = [
-    { icon: <TrendingUp />, title: 'Mint & Hold', description: 'Purchase a hotel\'s loyalty token to become a member and start earning.' },
+        { icon: <TrendingUp />, title: 'Mint & Hold', description: "Purchase a hotel's loyalty token to become a member and start earning." },
     { icon: <Star />, title: 'Earn Rewards', description: 'Tokens automatically accrue points, unlocking exclusive perks and benefits.' },
     { icon: <CheckCircle />, title: 'Own Your Loyalty', description: 'Trade your tokens on open marketplaces, giving you true ownership.' },
   ];
