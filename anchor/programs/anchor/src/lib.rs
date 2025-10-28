@@ -6,9 +6,10 @@ declare_id!("DSsad7SycJg39A2PUgGpLgyrvPytkvCiKhvAhS4j7ANz");
 pub mod anchor {
     use super::*;
 
-    pub fn initialize_config(ctx: Context<InitializeConfig>) -> Result<()> {
+    pub fn initialize_config(ctx: Context<InitializeConfig>, max_multiplier: u8) -> Result<()> {
         let config = &mut ctx.accounts.config;
         config.admin = *ctx.accounts.admin.key;
+        config.max_multiplier = max_multiplier;
         Ok(())
     }
 
@@ -23,9 +24,13 @@ pub mod anchor {
         Ok(())
     }
 
-    pub fn mint_membership_token(ctx: Context<MintMembershipToken>) -> Result<()> {
+    pub fn mint_membership_token(ctx: Context<MintMembershipToken>, multiplier: u8) -> Result<()> {
         if !ctx.accounts.hotel.verified {
             return err!(ErrorCode::HotelNotVerified);
+        }
+
+        if multiplier > ctx.accounts.config.max_multiplier {
+            return err!(ErrorCode::MultiplierTooHigh);
         }
 
         let membership_token = &mut ctx.accounts.membership_token;
@@ -34,9 +39,11 @@ pub mod anchor {
         membership_token.token_count = 1;
         membership_token.points_balance = 0;
         membership_token.last_points_update = Clock::get()?.unix_timestamp;
-        membership_token.multiplier = 1;
+        membership_token.multiplier = multiplier;
         membership_token.timestamp = Clock::get()?.unix_timestamp;
         membership_token.tier = 0; // Default to Basic tier
+        membership_token.last_add_points_timestamp = 0;
+        membership_token.points_added_this_period = 0;
 
         let hotel = &mut ctx.accounts.hotel;
         hotel.token_supply = hotel.token_supply.checked_add(1).ok_or(ErrorCode::ArithmeticError)?;
@@ -106,7 +113,21 @@ pub mod anchor {
 
     pub fn add_points(ctx: Context<AddPoints>, points: u64) -> Result<()> {
         let membership_token = &mut ctx.accounts.membership_token;
+        let current_timestamp = Clock::get()?.unix_timestamp;
+
+        // Reset points_added_this_period if a new period has started
+        if current_timestamp - membership_token.last_add_points_timestamp > 24 * 60 * 60 {
+            membership_token.points_added_this_period = 0;
+            membership_token.last_add_points_timestamp = current_timestamp;
+        }
+
+        if membership_token.points_added_this_period.checked_add(points).ok_or(ErrorCode::ArithmeticError)? > 1000 {
+            return err!(ErrorCode::AddPointsLimitExceeded);
+        }
+
         membership_token.points_balance = membership_token.points_balance.checked_add(points).ok_or(ErrorCode::ArithmeticError)?;
+        membership_token.points_added_this_period = membership_token.points_added_this_period.checked_add(points).ok_or(ErrorCode::ArithmeticError)?;
+
         msg!("Added {} points. New balance: {}", points, membership_token.points_balance);
         Ok(())
     }
@@ -151,6 +172,7 @@ pub struct MintMembershipToken<'info> {
     /// CHECK: This is not dangerous because we check it against the hotel owner
     #[account(mut, constraint = hotel.owner == hotel_authority.key() @ ErrorCode::InvalidHotelOwner)]
     pub hotel_authority: UncheckedAccount<'info>,
+    pub config: Account<'info, Config>,
     pub system_program: Program<'info, System>,
 }
 
@@ -216,10 +238,12 @@ pub struct Membership {
     pub multiplier: u8,
     pub timestamp: i64,
     pub tier: u8,
+    pub last_add_points_timestamp: i64,
+    pub points_added_this_period: u64,
 }
 
 impl Membership {
-    pub const LEN: usize = 8 + 32 + 32 + 8 + 8 + 8 + 1 + 8 + 1;
+    pub const LEN: usize = 8 + 32 + 32 + 8 + 8 + 8 + 1 + 8 + 1 + 8 + 8;
 }
 
 #[account]
@@ -237,6 +261,7 @@ impl PointsLedger {
 #[account]
 pub struct Config {
     pub admin: Pubkey,
+    pub max_multiplier: u8,
 }
 
 #[derive(Accounts)]
@@ -244,7 +269,7 @@ pub struct InitializeConfig<'info> {
     #[account(
         init,
         payer = admin,
-        space = 8 + 32,
+        space = 8 + 32 + 1,
         seeds = [b"config"],
         bump
     )]
@@ -270,5 +295,9 @@ pub enum ErrorCode {
     InvalidTimestamp,
     #[msg("Invalid redemption amount.")]
     InvalidRedemptionAmount,
+    #[msg("Multiplier too high.")]
+    MultiplierTooHigh,
+    #[msg("Add points limit exceeded.")]
+    AddPointsLimitExceeded,
 }
 
