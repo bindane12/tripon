@@ -2,13 +2,9 @@ import type { Metadata } from "next";
 import { Poppins, Bebas_Neue } from "next/font/google";
 import "./globals.css";
 import Header from "../components/Header";
-import dynamic from "next/dynamic";
+import Footer from "../components/Footer";
+import WalletContextProvider from "../components/WalletContextProvider";
 import { ReactNode } from "react";
-
-const WalletProvider = dynamic(
-  () => import("../components/ClientWalletProvider"),
-  { ssr: false }
-);
 
 const poppins = Poppins({ 
   subsets: ["latin"],
@@ -35,10 +31,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${poppins.variable} ${bebas_neue.variable} font-sans bg-background text-foreground`}>
-        <WalletProvider>
+        <WalletContextProvider>
+          {/* Skip link for keyboard users */}
+          <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:bg-white focus:px-3 focus:py-2 focus:rounded-md focus:shadow">Skip to content</a>
           <Header />
-          <main>{children}</main>
-        </WalletProvider>
+          <main id="main-content" className="max-w-6xl mx-auto px-6 py-12">{children}</main>
+          <Footer />
+        </WalletContextProvider>
       </body>
     </html>
   );

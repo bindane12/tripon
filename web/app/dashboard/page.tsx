@@ -226,7 +226,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-muted text-foreground">
-      <div className="container mx-auto p-4 sm:p-6 lg:p-8">
+      <div className="">
         <header className="mb-8">
           <h1 className="text-4xl font-extrabold text-foreground">Dashboard</h1>
           <p className="text-muted-foreground mt-1">Your personal hub for on-chain loyalty.</p>

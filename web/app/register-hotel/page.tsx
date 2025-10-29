@@ -102,7 +102,7 @@ export default function RegisterHotelPage() {
 
     if (!publicKey) {
         return (
-            <div className="container mx-auto p-4 text-center py-20">
+            <div className="text-center">
                 <p className="text-lg font-semibold text-gray-700">Please connect your wallet to register a hotel.</p>
             </div>
         );
@@ -110,7 +110,7 @@ export default function RegisterHotelPage() {
 
     return (
         <div className="min-h-screen bg-muted">
-            <div className="container mx-auto p-4 max-w-2xl py-12">
+            <div className="">
                 <header className="text-center mb-8">
                     <h1 className="text-4xl font-extrabold text-foreground">List Your Property</h1>
                     <p className="text-muted-foreground mt-2">Join the decentralized travel revolution by listing your hotel on TripOn.</p>

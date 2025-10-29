@@ -117,7 +117,7 @@ export default function ListHotelPage() {
     if (isSubmitted) {
         return (
             <div className="min-h-screen bg-muted flex items-center justify-center">
-                <div className="container mx-auto p-4 max-w-2xl text-center">
+                <div className="text-center">
                     <div className="bg-card border border-green-200 text-green-800 px-6 py-8 rounded-2xl shadow-lg">
                         <h2 className="text-3xl font-bold">Application Submitted!</h2>
                         <p className="mt-3 text-green-700">Thank you for your submission. We will review your application within 48 hours.</p>
@@ -130,7 +130,7 @@ export default function ListHotelPage() {
 
     return (
         <div className="min-h-screen bg-muted">
-            <div className="container mx-auto p-4 max-w-3xl py-12">
+            <div className="">
                 <header className="text-center mb-10">
                     <h1 className="text-4xl font-extrabold text-foreground">Become a Partner</h1>
                     <p className="text-muted-foreground mt-2">Follow the steps below to get your property listed on TripOn.</p>
