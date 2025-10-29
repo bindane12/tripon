@@ -8,7 +8,7 @@
       mintingPrice: 1.5,
       tokenSymbol: "AZUR",
       image: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?q=80&w=2070&auto=format&fit=crop",
-      owner: "G2Fga2z3VbK1bswFz1i7T2p3uP4y5z6x7v8b9c0d",
+      owner: "DngMMVbWwrzLLpAs2auar7T3rEpk6mv3bsNrM6YEYjSw",
     },
     {
       name: "Emerald Valley Resort",
@@ -18,7 +18,7 @@
       mintingPrice: 1.2,
       tokenSymbol: "EMRD",
       image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070&auto=format&fit=crop",
-      owner: "G2Fga2z3VbK1bswFz1i7T2p3uP4y5z6x7v8b9c0d",
+      owner: "DngMMVbWwrzLLpAs2auar7T3rEpk6mv3bsNrM6YEYjSw",
     },
     {
       name: "The Crimson Peak",
@@ -28,7 +28,7 @@
       mintingPrice: 2.0,
       tokenSymbol: "CRIM",
       image: "https://images.unsplash.com/photo-1615880342742-6e47ba86b6cf?q=80&w=1974&auto=format&fit=crop",
-      owner: "G2Fga2z3VbK1bswFz1i7T2p3uP4y5z6x7v8b9c0d",
+      owner: "DngMMVbWwrzLLpAs2auar7T3rEpk6mv3bsNrM6YEYjSw",
     },
     {
       name: "Sapphire Bay Hotel",
@@ -38,7 +38,7 @@
       mintingPrice: 1.8,
       tokenSymbol: "SAPH",
       image: "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?q=80&w=1974&auto=format&fit=crop",
-      owner: "G2Fga2z3VbK1bswFz1i7T2p3uP4y5z6x7v8b9c0d",
+      owner: "DngMMVbWwrzLLpAs2auar7T3rEpk6mv3bsNrM6YEYjSw",
     },
     {
         name: "Golden Sands Oasis",
@@ -48,6 +48,6 @@
         mintingPrice: 1.6,
         tokenSymbol: "GOLD",
         image: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=2070&auto=format&fit=crop",
-        owner: "G2Fga2z3VbK1bswFz1i7T2p3uP4y5z6x7v8b9c0d",
+        owner: "DngMMVbWwrzLLpAs2auar7T3rEpk6mv3bsNrM6YEYjSw",
     },
   ];
